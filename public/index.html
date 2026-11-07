@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Push POC — Web Push + PWA</title>
+<meta name="theme-color" content="#4f46e5">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon-192.png">
+<style>
+:root { color-scheme: dark light; --bg:#111827; --card:#1f2937; --line:#374151; --txt:#e5e7eb; --mut:#9ca3af; --acc:#6366f1; }
+* { box-sizing: border-box; }
+body { margin:0; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--txt); }
+.wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 64px; }
+header { display:flex; gap:12px; align-items:center; margin: 8px 0 16px; }
+header img { width:48px; height:48px; border-radius:12px; }
+h1 { font-size: 20px; margin:0; } .sub { color: var(--mut); font-size:13px; margin:2px 0 0; }
+.card { background: var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin:12px 0; }
+.row { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+button, input { font-size:14px; border-radius:10px; border:1px solid var(--line); }
+button { background: var(--acc); color:#fff; border:none; padding:10px 14px; cursor:pointer; }
+button.ghost { background:transparent; border:1px solid var(--line); color:var(--txt); }
+button:disabled { opacity:.45; cursor:not-allowed; }
+input { background:#111827; color:var(--txt); padding:10px 12px; width:100%; }
+label { font-size:12px; color:var(--mut); display:block; margin:8px 0 4px; }
+.status { display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px; }
+.pill { background:#111827; border:1px solid var(--line); border-radius:10px; padding:8px 10px; font-size:12px; }
+.pill b { display:block; font-size:11px; color:var(--mut); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+pre#log { background:#0b1220; border:1px solid var(--line); border-radius:10px; padding:10px; min-height:120px; max-height:280px; overflow:auto; font-size:12px; white-space:pre-wrap; }
+.hint { font-size:12.5px; color:var(--mut); line-height:1.5; }
+code { background:#0b1220; padding:1px 6px; border-radius:6px; font-size:12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="/icons/icon-192.png" alt="Push POC icon">
+    <div><h1>Push POC</h1><p class="sub">Web Push + PWA demo (Cloudflare Worker + KV)</p></div>
+  </header>
+
+  <div class="card">
+    <div class="status">
+      <div class="pill"><b>Permission</b><span id="st-perm">…</span></div>
+      <div class="pill"><b>Subscription</b><span id="st-sub">…</span></div>
+      <div class="pill"><b>Service worker</b><span id="st-sw">…</span></div>
+      <div class="pill"><b>Display mode</b><span id="st-mode">…</span></div>
+    </div>
+    <div class="row">
+      <button id="btn-perm">Enable notifications</button>
+      <button id="btn-sub">Subscribe</button>
+      <button id="btn-unsub" class="ghost">Unsubscribe</button>
+      <button id="btn-install" class="ghost" disabled>Install app</button>
+    </div>
+    <p class="hint" id="ios-hint" hidden>On iPhone/iPad: open this URL in Safari, tap Share → <b>Add to Home Screen</b>, then open the installed app — iOS only delivers push to the installed PWA (iOS 16.4+).</p>
+  </div>
+
+  <div class="card">
+    <b>Send a test push</b>
+    <label for="in-title">Title</label><input id="in-title" value="Hello from Push POC">
+    <label for="in-body">Body</label><input id="in-body" value="Push works — even with the tab closed.">
+    <label for="in-url">Click opens URL</label><input id="in-url" value="/">
+    <div class="row">
+      <button id="btn-self">Send to this device</button>
+      <button id="btn-all" class="ghost">Send to all devices</button>
+    </div>
+    <p class="hint">Tip: close this tab (keep the browser running) then send from another device to prove background push. On mobile, lock the screen.</p>
+  </div>
+
+  <div class="card"><b>Delivery log</b><pre id="log"></pre>
+    <div class="row"><button id="btn-copy" class="ghost">Copy endpoint</button><button id="btn-health" class="ghost">API health</button></div>
+  </div>
+
+  <p class="hint">Needs HTTPS (Cloudflare gives it) + notification permission + a push-service-capable browser. If permission shows <code>denied</code>, re-enable it in the browser site settings.</p>
+</div>
+<script src="/app.js" defer></script>
+</body>
+</html>

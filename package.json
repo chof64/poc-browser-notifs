@@ -1,0 +1,17 @@
+{
+  "name": "poc-browser-notifs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "POC: browser push notifications + PWA on Cloudflare Workers + Assets + KV",
+  "type": "module",
+  "scripts": {
+    "gen:keys": "node scripts/gen-vapid.mjs",
+    "make:icons": "node scripts/make-icons.mjs",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "cf:kv:create": "wrangler kv namespace create PUSH_SUBS"
+  },
+  "devDependencies": {
+    "wrangler": "^3.114.0"
+  }
+}
