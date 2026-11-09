@@ -101,13 +101,19 @@ async function pushTo(subscription, payload, env) {
   return res;
 }
 
+const kv = (env) => {
+  if (!env.KV_BINDING) throw new Error("KV binding KV_BINDING is missing (dashboard: KV namespace Name=KV_BINDING Value=poc_browser_notifs)");
+  return env.KV_BINDING;
+};
+
 const getSubs = async (env) => {
+  const store = kv(env);
   const out = [];
   let cursor;
   do {
-    const page = await env.PUSH_SUBS.list({ prefix: "sub:", cursor });
+    const page = await store.list({ prefix: "sub:", cursor });
     for (const k of page.keys) {
-      const v = await env.PUSH_SUBS.get(k.name, "json");
+      const v = await store.get(k.name, "json");
       if (v?.subscription?.endpoint) out.push({ id: k.name, ...v });
     }
     cursor = page.list_complete ? undefined : page.cursor;
@@ -121,7 +127,7 @@ export default {
     const { pathname } = url;
 
     if (pathname === "/api/health") {
-      return json({ ok: true, hasVapidPublic: !!env.VAPID_PUBLIC_KEY, hasVapidPrivate: !!env.VAPID_PRIVATE_KEY, subject: env.VAPID_SUBJECT || null });
+      return json({ ok: true, hasKv: !!env.KV_BINDING, hasVapidPublic: !!env.VAPID_PUBLIC_KEY, hasVapidPrivate: !!env.VAPID_PRIVATE_KEY, subject: env.VAPID_SUBJECT || null });
     }
     if (pathname === "/api/vapid-public-key") {
       if (!env.VAPID_PUBLIC_KEY) return json({ error: "VAPID_PUBLIC_KEY not set" }, 500);
@@ -133,13 +139,13 @@ export default {
       const sub = body?.subscription;
       if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) return json({ error: "bad subscription" }, 400);
       const id = "sub:" + (await sha256hex(sub.endpoint));
-      await env.PUSH_SUBS.put(id, JSON.stringify({ subscription: sub, meta: body.meta || null, updatedAt: new Date().toISOString() }));
+      await kv(env).put(id, JSON.stringify({ subscription: sub, meta: body.meta || null, updatedAt: new Date().toISOString() }));
       return json({ ok: true, id });
     }
     if (pathname === "/api/subscriptions" && request.method === "DELETE") {
       const endpoint = url.searchParams.get("endpoint");
       if (!endpoint) return json({ error: "missing endpoint" }, 400);
-      await env.PUSH_SUBS.delete("sub:" + (await sha256hex(endpoint)));
+      await kv(env).delete("sub:" + (await sha256hex(endpoint)));
       return json({ ok: true });
     }
     if (pathname === "/api/subscriptions/count") {
@@ -165,7 +171,7 @@ export default {
           const res = await pushTo(t.subscription, payload, env);
           const ok = res.status === 201 || res.status === 200 || res.status === 202;
           if (res.status === 404 || res.status === 410) {
-            await env.PUSH_SUBS.delete(t.id).catch(() => {});
+            await kv(env).delete(t.id).catch(() => {});
             pruned++;
           }
           results.push({ endpoint: t.subscription.endpoint.slice(0, 60) + "…", ok, status: res.status });
