@@ -15,6 +15,11 @@ const b64ToU8 = (s) => {
 const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
 const isStandalone = () =>
   matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const isBraveBrowser = async () => {
+  try {
+    return (await navigator.brave?.isBrave?.()) === true;
+  } catch { return false; }
+};
 
 let swReg = null, vapidKey = null, deferredPrompt = null;
 
@@ -68,7 +73,21 @@ $("btn-sub").onclick = async () => {
       body: JSON.stringify({ subscription: sub.toJSON(), meta: { ua: navigator.userAgent, url: location.origin } }),
     });
     log("Subscribed + saved:", await r.json());
-  } catch (e) { log("Subscribe failed:", e.message); }
+  } catch (e) {
+    const detail = `${e?.name ? e.name + ": " : ""}${e?.message || e}`;
+    log("Subscribe failed:", detail);
+    // "Registration failed - push service error" is thrown by the browser's
+    // push service (e.g. FCM) *before* our VAPID/server code is involved.
+    // In Brave this almost always means Google push messaging is disabled.
+    if (/push service/i.test(String(e?.message || ""))) {
+      const brave = await isBraveBrowser();
+      if (brave) {
+        log("Brave blocks push by default. Fix: open brave://settings/privacy → turn ON “Use Google services for push messaging” → Relaunch Brave → Subscribe again. (Chrome/Edge work without this step.)");
+      } else {
+        log("Hint: push-service registration failed. Check network/VPN/firewall to the push service (e.g. fcm.googleapis.com), then retry. On desktop this works from a normal browser tab — installing the PWA is not required (unlike iOS).");
+      }
+    }
+  }
   await refresh();
 };
 

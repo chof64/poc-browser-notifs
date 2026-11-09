@@ -40,6 +40,11 @@ Alternatively via CLI: `npm run cf:kv:create`, paste the ID, `wrangler secret pu
 - `GET /api/subscriptions/count` → `{ count }`
 - `POST /api/send` `{ target: 'self'|'all', subscription?, title, body, url }` → `{ ok, results, pruned }` (410/404 endpoints auto-pruned)
 
+## Brave notes
+
+- `Subscribe failed: Registration failed - push service error` in Brave is browser-level (push service unreachable; VAPID/Worker not involved). Desktop tab is fine — only iOS needs the installed PWA.
+- The app detects Brave on this error and prints the fix in the delivery log. Keep `public/app.js` as the canonical wording.
+
 ## iOS notes
 
 - Requires iOS 16.4+, the app **installed** via Safari Share → Add to Home Screen, then opened from the home screen. Browser-tab push does not work on iOS.
