@@ -22,7 +22,7 @@ Open the printed URL, allow notifications, subscribe, send.
 2. Cloudflare dashboard → **Workers & Pages → Create → Connect to Git** → pick the repo/branch.
    - Build command: none (or `npm run make:icons` if you delete icons)
    - Deploy command: `npx wrangler deploy` (or leave default; `wrangler.toml` drives it)
-3. **Bindings → KV**: create namespace `PUSH_SUBS`, bind as `PUSH_SUBS`. Copy its ID into `wrangler.toml` (`[[kv_namespaces]] id`), or set the binding in the dashboard.
+3. **Bindings → KV**: Type `KV namespace`, Name `KV_BINDING`, Value `poc_browser_notifs`. For CLI deploys only, copy its ID into `wrangler.toml` (`[[kv_namespaces]] id`); dashboard Git deploys use the dashboard binding.
 4. **Settings → Variables**: add secrets (encrypt the private one):
    - `VAPID_PUBLIC_KEY` = output of `npm run gen:keys`
    - `VAPID_PRIVATE_KEY` = output of `npm run gen:keys` (secret)
