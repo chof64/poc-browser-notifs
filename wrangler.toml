@@ -1,6 +1,7 @@
 name = "poc-browser-notifs"
 main = "src/worker.js"
 compatibility_date = "2024-11-01"
+keep_vars = true
 
 [assets]
 directory = "./public"
@@ -8,7 +9,12 @@ not_found_handling = "single-page-application"
 
 [[kv_namespaces]]
 binding = "PUSH_SUBS"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "6b91dda794934a9d9be519ce215b3622"
 
 [vars]
+# Variable (non-secret, public to browsers via /api/vapid-public-key). Set value in dashboard; placeholder below.
+VAPID_PUBLIC_KEY = "REPLACE_WITH_VAPID_PUBLIC_KEY"
+# Variable (non-secret). Contact for push service.
 VAPID_SUBJECT = "mailto:you@example.com"
+# Secret VAPID_PRIVATE_KEY is intentionally absent here — set it in the
+# dashboard or via `wrangler secret put VAPID_PRIVATE_KEY`.
