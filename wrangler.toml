@@ -6,9 +6,19 @@ compatibility_date = "2024-11-01"
 directory = "./public"
 not_found_handling = "single-page-application"
 
-[[kv_namespaces]]
-binding = "PUSH_SUBS"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+# NOTE (dashboard Git deploys): keep KV *out* of this file on purpose.
+# Create/bind it in Dashboard → Workers → poc-browser-notifs → Bindings → KV:
+#   Type = KV namespace, Name = KV_BINDING, Value = poc_browser_notifs
+#   (must match env.KV_BINDING in src/worker.js)
+# If you put [[kv_namespaces]] here with a placeholder ID, `npx wrangler deploy`
+# in the dashboard build will override the dashboard binding and fail with:
+#   KV namespace 'REPLACE_WITH_KV_NAMESPACE_ID' is not valid [code: 10042]
+#
+# CLI alternative (local / direct `wrangler deploy`): uncomment below and paste
+# the real ID from `npm run cf:kv:create`:
+# [[kv_namespaces]]
+# binding = "KV_BINDING"
+# id = "PASTE_REAL_KV_NAMESPACE_ID_HERE"
 
 [vars]
 VAPID_SUBJECT = "mailto:you@example.com"

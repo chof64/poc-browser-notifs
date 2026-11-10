@@ -32,6 +32,11 @@ const isStandalone = () =>
   matchMedia("(display-mode: standalone)").matches ||
   matchMedia("(display-mode: fullscreen)").matches ||
   navigator.standalone === true;
+const isBraveBrowser = async () => {
+  try {
+    return (await navigator.brave?.isBrave?.()) === true;
+  } catch { return false; }
+};
 const iosVersion = () => {
   const m = ua.match(/OS (\d+)[_.](\d+)/i);
   if (m) return `${m[1]}.${m[2]}`;
@@ -237,8 +242,19 @@ $("btn-sub").onclick = async () => {
     log("Subscribed + saved:", await r.json());
     if (isIos()) log("iOS check: keep the installed app closed (or lock the screen) and use Send to this device — the notification should appear as a system notification.");
   } catch (e) {
-    log("Subscribe failed:", e.message);
-    if (isIos()) {
+    const detail = `${e?.name ? e.name + ": " : ""}${e?.message || e}`;
+    log("Subscribe failed:", detail);
+    // "Registration failed - push service error" is thrown by the browser's
+    // push service (e.g. FCM) *before* our VAPID/server code is involved.
+    // In Brave this almost always means Google push messaging is disabled.
+    if (/push service/i.test(String(e?.message || ""))) {
+      const brave = await isBraveBrowser();
+      if (brave) {
+        log("Brave blocks push by default. Fix: open brave://settings/privacy → turn ON “Use Google services for push messaging” → Relaunch Brave → Subscribe again. (Chrome/Edge work without this step.)");
+      } else {
+        log("Hint: push-service registration failed. Check network/VPN/firewall to the push service (e.g. fcm.googleapis.com), then retry. On desktop this works from a normal browser tab — installing the PWA is not required (unlike iOS).");
+      }
+    } else if (isIos()) {
       if (/abort|permission|not allowed/i.test(e.message)) log("iOS hint: this usually means you are in a Safari tab (not the installed app) or permission was dismissed. Install first, open from Home Screen, Enable notifications, then Subscribe.");
       else log(`iOS hint: needs iOS 16.4+ (you report ${iosVersion()}), HTTPS, installed PWA, permission granted.`);
     }
