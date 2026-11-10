@@ -1,5 +1,5 @@
 /* Push POC service worker: app-shell cache + push/click handlers. */
-const CACHE = "push-poc-v1";
+const CACHE = "push-poc-v4";
 const SHELL = ["/", "/index.html", "/app.js", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png", "/offline.html"];
 
 self.addEventListener("install", (e) => {
@@ -14,15 +14,33 @@ self.addEventListener("activate", (e) => {
 });
 self.addEventListener("fetch", (e) => {
   const { request } = e;
-  if (request.method !== "GET" || new URL(request.url).pathname.startsWith("/api/")) return;
+  const url = new URL(request.url);
+  if (request.method !== "GET" || url.pathname.startsWith("/api/")) return;
+  // Navigations (incl. iOS start_url "/?source=pwa") always resolve to the cached shell.
+  if (request.mode === "navigate") {
+    e.respondWith(
+      fetch(request)
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put("/index.html", copy)).catch(() => {});
+          }
+          return res;
+        })
+        .catch(() => caches.match("/index.html").then((hit) => hit || caches.match("/offline.html")))
+    );
+    return;
+  }
   e.respondWith(
     caches.match(request, { ignoreSearch: true }).then(
       (hit) =>
         hit ||
         fetch(request).then(
           (res) => {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
+            if (res.ok) {
+              const copy = res.clone();
+              caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
+            }
             return res;
           },
           () => caches.match("/offline.html")
