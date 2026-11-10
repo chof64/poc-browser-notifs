@@ -47,11 +47,13 @@ Alternatively via CLI: `npm run cf:kv:create`, paste the ID, `wrangler secret pu
 
 ## iOS notes
 
-- Requires iOS 16.4+, the app **installed** via Safari Share → Add to Home Screen, then opened from the home screen. Browser-tab push does not work on iOS.
-- App shows an install hint automatically on iOS when not in standalone mode.
+- Requires iOS/iPadOS 16.4+, the app **installed** via Safari Share → Add to Home Screen, then opened from the home screen. Browser-tab push does not work on iOS.
+- Apple exposes no `beforeinstallprompt`, so the **Install app** button becomes **Add to Home Screen** on iOS and opens a steps sheet (Share → Add to Home Screen → Add → open from Home Screen → Enable + Subscribe inside the installed app). It can never auto-trigger the iOS install dialog.
+- The app detects iPadOS desktop-mode UAs and gates Subscribe with an explanation when not running standalone.
 
 ## Files
 
 - `public/` — PWA shell (`index.html`, `app.js`, `sw.js`, manifest, icons, offline page)
 - `src/worker.js` — Worker + Web Push (VAPID + RFC 8291 `aes128gcm`, WebCrypto, no deps) + KV store
 - `scripts/gen-vapid.mjs` — VAPID key generator; `scripts/make-icons.mjs` — placeholder icon generator
+- `scripts/check-ios-detect.mjs` — `npm run check:ios` verifies iPhone/iPad detection

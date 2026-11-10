@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "gen:keys": "node scripts/gen-vapid.mjs",
+    "check:ios": "node scripts/check-ios-detect.mjs",
     "make:icons": "node scripts/make-icons.mjs",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",

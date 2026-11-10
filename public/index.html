@@ -5,8 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Push POC — Web Push + PWA</title>
 <meta name="theme-color" content="#4f46e5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Push POC">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <style>
 :root { color-scheme: dark light; --bg:#111827; --card:#1f2937; --line:#374151; --txt:#e5e7eb; --mut:#9ca3af; --acc:#6366f1; }
 * { box-sizing: border-box; }
@@ -29,6 +34,33 @@ label { font-size:12px; color:var(--mut); display:block; margin:8px 0 4px; }
 pre#log { background:#0b1220; border:1px solid var(--line); border-radius:10px; padding:10px; min-height:120px; max-height:280px; overflow:auto; font-size:12px; white-space:pre-wrap; }
 .hint { font-size:12.5px; color:var(--mut); line-height:1.5; }
 code { background:#0b1220; padding:1px 6px; border-radius:6px; font-size:12px; }
+.install-card { border:1px solid #a78bfa; background:#1e1b4b; border-radius:14px; padding:14px; margin:12px 0; }
+.install-card b.t { display:block; font-size:14px; margin-bottom:4px; }
+.install-card p { font-size:12.5px; color:#c7d2fe; margin:6px 0 10px; line-height:1.5; }
+/* bottom-sheet modal for iOS Add to Home Screen steps */
+.sheet-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:flex-end; justify-content:center; z-index:50; padding:12px; }
+.sheet-backdrop.open { display:flex; }
+.sheet { background:#1f2937; border:1px solid var(--line); border-radius:18px 18px 14px 14px; max-width:520px; width:100%; padding:18px 18px 22px; max-height:92vh; overflow:auto; }
+.sheet h2 { margin:0 0 4px; font-size:17px; }
+.sheet .sub2 { color:var(--mut); font-size:12.5px; margin:0 0 10px; }
+.sheet ol { margin:10px 0; padding-left:22px; font-size:13.5px; line-height:1.65; }
+.sheet ol b { color:#fff; }
+.sheet ol li { margin-bottom:6px; }
+.share-icon { display:inline-block; vertical-align:-4px; width:18px; height:18px; border:1.5px solid #a5b4fc; border-radius:5px; position:relative; margin:0 2px; }
+.share-icon::after { content:"↑"; position:absolute; inset:-7px 0 0; text-align:center; color:#a5b4fc; font-size:13px; font-weight:700; }
+.sheet-context { font-size:12px; color:#fbbf24; background:#451a03; border:1px solid #92400e; border-radius:8px; padding:8px 10px; margin:8px 0; }
+.sheet-context.ok { color:#6ee7b7; background:#022c22; border-color:#065f46; }
+/* mock Safari bars showing where Share lives */
+.mock-label { font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:.05em; margin:12px 0 6px; }
+.mock-bar { background:#0b1220; border:1px solid var(--line); border-radius:12px; padding:10px 12px; display:flex; align-items:center; justify-content:space-around; font-size:18px; position:relative; }
+.mock-bar .mk { opacity:.55; }
+.mock-bar .mk.share { opacity:1; position:relative; background:#312e81; border:2px solid #a5b4fc; border-radius:10px; padding:2px 10px; box-shadow:0 0 0 4px rgba(165,180,252,.25); }
+.bounce-arrow { text-align:center; font-size:26px; line-height:1; color:#a5b4fc; animation:bounce 1.2s infinite; margin:2px 0; }
+.bounce-arrow.up { animation-name:bounceUp; }
+@keyframes bounce { 0%,100% { transform:translateY(0); } 50% { transform:translateY(8px); } }
+@keyframes bounceUp { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+.sheet-check { display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--mut); margin:10px 0 0; }
+.sheet-check input { width:auto; accent-color:var(--acc); }
 </style>
 </head>
 <body>
@@ -44,14 +76,25 @@ code { background:#0b1220; padding:1px 6px; border-radius:6px; font-size:12px; }
       <div class="pill"><b>Subscription</b><span id="st-sub">…</span></div>
       <div class="pill"><b>Service worker</b><span id="st-sw">…</span></div>
       <div class="pill"><b>Display mode</b><span id="st-mode">…</span></div>
+      <div class="pill"><b>Push support</b><span id="st-push">…</span></div>
+      <div class="pill"><b>Device</b><span id="st-device">…</span></div>
     </div>
     <div class="row">
       <button id="btn-perm">Enable notifications</button>
       <button id="btn-sub">Subscribe</button>
       <button id="btn-unsub" class="ghost">Unsubscribe</button>
-      <button id="btn-install" class="ghost" disabled>Install app</button>
+      <button id="btn-install" class="ghost">Install app</button>
     </div>
-    <p class="hint" id="ios-hint" hidden>On iPhone/iPad: open this URL in Safari, tap Share → <b>Add to Home Screen</b>, then open the installed app — iOS only delivers push to the installed PWA (iOS 16.4+).</p>
+  </div>
+
+  <div class="install-card" id="ios-card" hidden>
+    <b class="t">📲 iPhone / iPad? Install this app first</b>
+    <p>iOS only delivers push to a Home-Screen-installed app (iOS 16.4+), opened from the Home Screen — not in a Safari tab. Safari offers no automatic install button, so it takes 20 seconds manually.</p>
+    <div class="row" style="margin-top:0">
+      <button id="btn-ios-steps">Show Add to Home Screen steps</button>
+      <button id="btn-ios-share" class="ghost">Share this app</button>
+      <button id="btn-ios-copy" class="ghost">Copy link</button>
+    </div>
   </div>
 
   <div class="card">
@@ -63,15 +106,54 @@ code { background:#0b1220; padding:1px 6px; border-radius:6px; font-size:12px; }
       <button id="btn-self">Send to this device</button>
       <button id="btn-all" class="ghost">Send to all devices</button>
     </div>
-    <p class="hint">Tip: close this tab (keep the browser running) then send from another device to prove background push. On mobile, lock the screen.</p>
+    <p class="hint">Tip: close this tab (keep the browser running) then send from another device to prove background push. On mobile, lock the screen. On iOS, send while the installed app is closed.</p>
   </div>
 
   <div class="card"><b>Delivery log</b><pre id="log"></pre>
     <div class="row"><button id="btn-copy" class="ghost">Copy endpoint</button><button id="btn-health" class="ghost">API health</button></div>
   </div>
 
-  <p class="hint">Needs HTTPS (Cloudflare gives it) + notification permission + a push-service-capable browser. If permission shows <code>denied</code>, re-enable it in the browser site settings. <b>Brave users:</b> if Subscribe fails with <code>push service error</code>, read the Delivery log — the app prints the one-setting fix there.</p>
+  <p class="hint">Needs HTTPS (Cloudflare gives it) + notification permission + a push-service-capable browser. If permission shows <code>denied</code>, re-enable it in the browser site settings. On iOS: Settings → General → Software Update (16.4+), then Safari → Share → Add to Home Screen. <b>Brave users:</b> if Subscribe fails with <code>push service error</code>, read the Delivery log — the app prints the one-setting fix there.</p>
 </div>
+
+<div class="sheet-backdrop" id="sheet">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <h2 id="sheet-title">Add to Home Screen (iPhone / iPad)</h2>
+    <p class="sub2">Apple provides no automatic install button — follow these steps in <b>Safari</b>. Takes ~20 seconds. This page cannot tap Safari's Share button for you.</p>
+    <div class="sheet-context" id="sheet-context">You are in a Safari tab (not installed).</div>
+
+    <div id="mock-iphone">
+      <div class="mock-label">On iPhone — look at the bottom toolbar</div>
+      <div class="bounce-arrow">↓</div>
+      <div class="mock-bar"><span class="mk">◀</span><span class="mk">▶</span><span class="mk share">⎙ <span class="share-icon" aria-hidden="true"></span></span><span class="mk">📖</span><span class="mk">▢</span></div>
+      <p class="sub2" style="margin-top:6px">Tap the <b>Share</b> button in the bottom-center of Safari, then scroll down to <b>Add to Home Screen</b>.</p>
+    </div>
+
+    <div id="mock-ipad" hidden>
+      <div class="mock-label">On iPad — look at the top-right of Safari</div>
+      <div class="mock-bar"><span class="mk">◀</span><span class="mk">▶</span><span class="mk">🔍 address bar</span><span class="mk share">⎙ <span class="share-icon" aria-hidden="true"></span></span></div>
+      <div class="bounce-arrow up">↑</div>
+      <p class="sub2">Tap the <b>Share</b> button at the top of Safari, then <b>Add to Home Screen</b>.</p>
+    </div>
+
+    <ol>
+      <li>Open this page in <b>Safari</b> (not Chrome, not an in-app browser like Messenger / Facebook / Gmail).</li>
+      <li>Tap Safari's <b>Share</b> button <span class="share-icon" aria-hidden="true"></span> (see mockup above for where it is).</li>
+      <li>Scroll the share sheet down and tap <b>Add to Home Screen</b> → <b>Add</b> (rename if you like).</li>
+      <li>Open the new <b>Push POC</b> icon from your Home Screen — <b>not</b> from inside Safari.</li>
+      <li>Inside the installed app: <b>Enable notifications → Subscribe → Send to this device</b>. Then lock the screen to prove it arrives like a native push.</li>
+    </ol>
+    <p class="sub2" id="sheet-compat">Requires iOS / iPadOS 16.4 or later. Check: Settings → General → About → Software Version. If you don't see "Add to Home Screen", you're not in Safari or iOS is too old.</p>
+    <div class="row">
+      <button id="btn-sheet-share">Share this app</button>
+      <button id="btn-sheet-copy" class="ghost">Copy link</button>
+      <button id="btn-sheet-close" class="ghost">Got it</button>
+    </div>
+    <p class="sub2" id="share-note" style="margin-top:8px">The in-page Share button opens your system's share sheet so you can send this link to your iPhone (e.g. via Messages). Installing still needs Safari's own Share → Add to Home Screen — a webpage can't tap that for you.</p>
+    <label class="sheet-check"><input type="checkbox" id="sheet-hide"> Don't auto-show this again</label>
+  </div>
+</div>
+
 <script src="/app.js" defer></script>
 </body>
 </html>
