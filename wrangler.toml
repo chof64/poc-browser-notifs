@@ -1,24 +1,26 @@
 name = "poc-browser-notifs"
 main = "src/worker.js"
 compatibility_date = "2024-11-01"
+keep_vars = true
 
 [assets]
 directory = "./public"
 not_found_handling = "single-page-application"
 
-# NOTE (dashboard Git deploys): keep KV *out* of this file on purpose.
-# Create/bind it in Dashboard → Workers → poc-browser-notifs → Bindings → KV:
-#   Type = KV namespace, Name = KV_BINDING, Value = poc_browser_notifs
-#   (must match env.KV_BINDING in src/worker.js)
-# If you put [[kv_namespaces]] here with a placeholder ID, `npx wrangler deploy`
-# in the dashboard build will override the dashboard binding and fail with:
-#   KV namespace 'REPLACE_WITH_KV_NAMESPACE_ID' is not valid [code: 10042]
-#
-# CLI alternative (local / direct `wrangler deploy`): uncomment below and paste
-# the real ID from `npm run cf:kv:create`:
-# [[kv_namespaces]]
-# binding = "KV_BINDING"
-# id = "PASTE_REAL_KV_NAMESPACE_ID_HERE"
+# Both bindings point at the same namespace: PUSH_SUBS (kept, with real ID)
+# plus KV_BINDING, which src/worker.js actually reads (env.KV_BINDING).
+[[kv_namespaces]]
+binding = "PUSH_SUBS"
+id = "6b91dda794934a9d9be519ce215b3622"
+
+[[kv_namespaces]]
+binding = "KV_BINDING"
+id = "6b91dda794934a9d9be519ce215b3622"
 
 [vars]
+# Variable (non-secret, public to browsers via /api/vapid-public-key). Set value in dashboard; placeholder below.
+VAPID_PUBLIC_KEY = "REPLACE_WITH_VAPID_PUBLIC_KEY"
+# Variable (non-secret). Contact for push service.
 VAPID_SUBJECT = "mailto:you@example.com"
+# Secret VAPID_PRIVATE_KEY is intentionally absent here — set it in the
+# dashboard or via `wrangler secret put VAPID_PRIVATE_KEY`.
