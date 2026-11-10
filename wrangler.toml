@@ -7,8 +7,14 @@ keep_vars = true
 directory = "./public"
 not_found_handling = "single-page-application"
 
+# Both bindings point at the same namespace: PUSH_SUBS (kept, with real ID)
+# plus KV_BINDING, which src/worker.js actually reads (env.KV_BINDING).
 [[kv_namespaces]]
 binding = "PUSH_SUBS"
+id = "6b91dda794934a9d9be519ce215b3622"
+
+[[kv_namespaces]]
+binding = "KV_BINDING"
 id = "6b91dda794934a9d9be519ce215b3622"
 
 [vars]
