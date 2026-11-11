@@ -7,20 +7,16 @@ keep_vars = true
 directory = "./public"
 not_found_handling = "single-page-application"
 
-# Both bindings point at the same namespace: PUSH_SUBS (kept, with real ID)
-# plus KV_BINDING, which src/worker.js actually reads (env.KV_BINDING).
 [[kv_namespaces]]
 binding = "PUSH_SUBS"
 id = "6b91dda794934a9d9be519ce215b3622"
 
-[[kv_namespaces]]
-binding = "KV_BINDING"
-id = "6b91dda794934a9d9be519ce215b3622"
+# Non-secret VAPID vars (dashboard-managed by default).
+# [vars]
+# VAPID_PUBLIC_KEY = "REPLACE_WITH_VAPID_PUBLIC_KEY"
+# VAPID_SUBJECT = "mailto:you@example.com"
 
-[vars]
-# Variable (non-secret, public to browsers via /api/vapid-public-key). Set value in dashboard; placeholder below.
-VAPID_PUBLIC_KEY = "REPLACE_WITH_VAPID_PUBLIC_KEY"
-# Variable (non-secret). Contact for push service.
-VAPID_SUBJECT = "mailto:you@example.com"
-# Secret VAPID_PRIVATE_KEY is intentionally absent here — set it in the
-# dashboard or via `wrangler secret put VAPID_PRIVATE_KEY`.
+# Secret: set in the dashboard or with `wrangler secret put VAPID_PRIVATE_KEY`.
+# Wrangler 4+ syntax; declaring `required` also limits which keys load from `.dev.vars`.
+# [secrets]
+# required = ["VAPID_PRIVATE_KEY"]
