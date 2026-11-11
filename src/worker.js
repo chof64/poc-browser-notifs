@@ -1,4 +1,5 @@
 /* Push POC Worker: static assets + Web Push API. Zero deps (WebCrypto + fetch + KV).
+ * KV binding: env.PUSH_SUBS.
  * Routes:
  *   GET    /api/health
  *   GET    /api/vapid-public-key
@@ -102,8 +103,8 @@ async function pushTo(subscription, payload, env) {
 }
 
 const kv = (env) => {
-  if (!env.KV_BINDING) throw new Error("KV binding KV_BINDING is missing (dashboard: KV namespace Name=KV_BINDING Value=poc_browser_notifs)");
-  return env.KV_BINDING;
+  if (!env.PUSH_SUBS) throw new Error("KV binding PUSH_SUBS is missing (dashboard: KV namespace Name=PUSH_SUBS Value=poc_browser_notifs)");
+  return env.PUSH_SUBS;
 };
 
 const getSubs = async (env) => {
@@ -127,7 +128,7 @@ export default {
     const { pathname } = url;
 
     if (pathname === "/api/health") {
-      return json({ ok: true, hasKv: !!env.KV_BINDING, hasVapidPublic: !!env.VAPID_PUBLIC_KEY, hasVapidPrivate: !!env.VAPID_PRIVATE_KEY, subject: env.VAPID_SUBJECT || null });
+      return json({ ok: true, hasKv: !!env.PUSH_SUBS, hasVapidPublic: !!env.VAPID_PUBLIC_KEY, hasVapidPrivate: !!env.VAPID_PRIVATE_KEY, subject: env.VAPID_SUBJECT || null });
     }
     if (pathname === "/api/vapid-public-key") {
       if (!env.VAPID_PUBLIC_KEY) return json({ error: "VAPID_PUBLIC_KEY not set" }, 500);

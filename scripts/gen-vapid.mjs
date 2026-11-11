@@ -18,10 +18,11 @@ const priv = b64u(Buffer.from(jwkPriv.d, "base64url"));
 
 console.log("VAPID_PUBLIC_KEY=" + pub);
 console.log("VAPID_PRIVATE_KEY=" + priv);
-console.log("\nCloudflare dashboard -> Workers -> Settings -> Variables:");
-console.log("  VAPID_PUBLIC_KEY = " + pub);
-console.log("  VAPID_PRIVATE_KEY = (see above, keep secret)");
-console.log('  VAPID_SUBJECT = mailto:you@example.com');
+console.log("\nCloudflare dashboard -> Workers -> Settings -> Variables and Secrets:");
+console.log("  VAPID_PUBLIC_KEY (variable) = " + pub);
+console.log("  VAPID_SUBJECT (variable) = mailto:you@example.com");
+console.log("  VAPID_PRIVATE_KEY (secret) = (see above)");
+console.log("\nCLI: npx wrangler secret put VAPID_PRIVATE_KEY");
 
 if (process.argv.includes("--write")) {
   let cur = existsSync(".dev.vars") ? readFileSync(".dev.vars", "utf8") : "";
